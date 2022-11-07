@@ -7,7 +7,7 @@ services:
   workouse_digital_wallet.block_event_listener.sylius.shop.account.dashboard.after_information:
     class: Sylius\Bundle\UiBundle\Block\BlockEventListener
     arguments:
-      - 'WorkouseSyliusDigitalWalletPlugin:shop:customer_credit_block.html.twig'
+      - '@@WorkouseSyliusDigitalWalletPlugin/shop/customer_credit_block.html.twig'
     tags:
       - { name: kernel.event_listener, event: sonata.block.event.sylius.shop.account.dashboard.after_information, method: onBlockEvent }
 
@@ -25,7 +25,7 @@ services:
   workouse_digital_wallet.block_event_listener.sylius.shop.cart.summary.totals:
     class: Sylius\Bundle\UiBundle\Block\BlockEventListener
     arguments:
-      - 'WorkouseSyliusDigitalWalletPlugin:shop:cart_summary_credit.html.twig'
+      - '@@WorkouseSyliusDigitalWalletPlugin/shop/cart_summary_credit.html.twig'
     tags:
       - { name: kernel.event_listener, event: sonata.block.event.sylius.shop.cart.summary.totals, method: onBlockEvent }
 
