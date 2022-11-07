@@ -1,5 +1,5 @@
 {
-    "name": "workouse/sylius-digital-wallet-plugin",
+    "name": "3attar/sylius-digital-wallet-plugin",
     "type": "sylius-plugin",
     "keywords": ["sylius", "sylius-plugin"],
     "description": "Digital Wallet Bundle for Sylius E-Commerce",
