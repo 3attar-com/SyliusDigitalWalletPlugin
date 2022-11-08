@@ -3,9 +3,13 @@
     {{ 'workouse_digital_wallet.shop.ui.available_balance'|trans }}
     <b>{{ money.format(workouse_digital_wallet.balance, sylius.currencyCode) }}</b>
     <br>
-    <a href="{{ path('workouse_digital_wallet_credit_use') }}">{{ 'workouse_digital_wallet.shop.ui.use'|trans }}</a> |
-    <a href="{{ path('workouse_digital_wallet_credit_remove') }}">{{ 'workouse_digital_wallet.shop.ui.remove'|trans }}</a>
-
+    <br>
+    <a class="btn btn-success" href="{{ path('workouse_digital_wallet_credit_use') }}">
+        {{ 'workouse_digital_wallet.shop.ui.use'|trans }}</a>
+    |
+    <a   class="btn btn-danger" href="{{ path('workouse_digital_wallet_credit_remove') }}">
+        {{ 'workouse_digital_wallet.shop.ui.remove'|trans }}</a>
+    <br> <br>
     {% set adjustmentTotal = 0 %}
     {% for item in settings.cart.items %}
         {% for adjustment in item.adjustments %}
