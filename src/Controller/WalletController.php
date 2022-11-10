@@ -59,6 +59,7 @@ class WalletController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $credit = $form->getData();
+            $credit->setAmount($credit->getAmount()*100);
             $credit->setCustomer($customer);
 
             $em = $this->getDoctrine()->getManager();
