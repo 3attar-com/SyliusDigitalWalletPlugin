@@ -1,15 +1,41 @@
 {% import "@SyliusShop/Common/Macro/money.html.twig" as money %}
+{% set adjustmentTotal = 0 %}
+    {% for item in settings.cart.items %}
+        {% for adjustment in item.adjustments %}
+            {% if adjustment.type == 'wallet' %}
+                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
 {% if is_granted('ROLE_USER') %}
     {{ 'workouse_digital_wallet.shop.ui.available_balance'|trans }}
-    <b>{{ money.format(workouse_digital_wallet.balance, sylius.currencyCode) }}</b>
+    <b>{{ money.format(workouse_digital_wallet.balance + adjustmentTotal, sylius.currencyCode) }}</b>
     <br>
     <br>
-    <a class="btn btn-success" href="{{ path('workouse_digital_wallet_credit_use') }}">
-        {{ 'workouse_digital_wallet.shop.ui.use'|trans }}</a>
-    |
-    <a   class="btn btn-danger" href="{{ path('workouse_digital_wallet_credit_remove') }}">
-        {{ 'workouse_digital_wallet.shop.ui.remove'|trans }}</a>
-    <br> <br>
+    <form method="get" action="{{ path('workouse_digital_wallet_credit_use') }}">
+        <div class="row">
+            <div class="col-9">
+             <span class="sylius-quantity number-input">
+                <button class="minus"
+                        onclick="this.parentNode.querySelector('input[type=number]').stepDown();return false;"><i
+                            class="icon-minus"></i></button>
+                <input type="number" id="sylius_cart_items_0_quantity" name="amount" required="required" min="1"
+                       value="{{ workouse_digital_wallet.balance/100 }}" max="{{ workouse_digital_wallet.balance/100 }}"
+                       class="form-control">
+                <button class="plus"
+                        onclick="this.parentNode.querySelector('input[type=number]').stepUp();return false;"><i
+                            class="icon-plus"></i></button>
+            </span>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-success" type="submit">
+                    {{ 'workouse_digital_wallet.shop.ui.use'|trans }}
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <br>
     {% set adjustmentTotal = 0 %}
     {% for item in settings.cart.items %}
         {% for adjustment in item.adjustments %}
@@ -24,6 +50,13 @@
             <tr>
                 <td>{{ 'workouse_digital_wallet.shop.ui.wallet'|trans }}:</td>
                 <td class="right aligned">{{ money.format(adjustmentTotal, sylius.currencyCode) }}</td>
+                <td class="right aligned">
+                    <u>
+                        <a style="color: red" href="{{ path('workouse_digital_wallet_credit_remove') }}">
+                            {{ 'workouse_digital_wallet.shop.ui.remove'|trans }}</a>
+                    </u>
+
+                </td>
             </tr>
             </tbody>
         </table>
