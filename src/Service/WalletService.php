@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 namespace Workouse\SyliusDigitalWalletPlugin\Service;
-
+use App\Entity\Customer\Customer;
 use Doctrine\ORM\EntityManager;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
@@ -17,7 +17,6 @@ use Sylius\Component\Order\Processor\CompositeOrderProcessor;
 use Symfony\Component\Security\Core\Security;
 use Workouse\SyliusDigitalWalletPlugin\Entity\Credit;
 use Workouse\SyliusDigitalWalletPlugin\Entity\CreditInterface;
-
 class WalletService
 {
     /** @var Security */
@@ -66,15 +65,21 @@ class WalletService
         ])));
     }
 
+    public function balanceByEmail($email)
+    {
+        $customer = $this->entityManager->getRepository(Customer::class)->findOneBy(['email' => $email]);
+        return $this->balance($customer);
+    }
+
     public function detractBalance(OrderInterface $order)
     {
         $adjustment = array_sum(array_map(function (OrderItem $orderItem) {
-            return array_sum(array_map(function (Adjustment $adjustment) {
-                if ($adjustment->getType() === CreditInterface::TYPE) {
-                    return $adjustment->getAmount();
-                }
-            }, $orderItem->getAdjustments()->toArray()));
-        }, $order->getItems()->toArray())
+                return array_sum(array_map(function (Adjustment $adjustment) {
+                    if ($adjustment->getType() === CreditInterface::TYPE) {
+                        return $adjustment->getAmount();
+                    }
+                }, $orderItem->getAdjustments()->toArray()));
+            }, $order->getItems()->toArray())
         );
 
         if ($adjustment < 0) {
@@ -92,32 +97,40 @@ class WalletService
         }
     }
 
-    public function useWallet(Order $order)
+    public function useWallet(Order $order , $discountAmount)
     {
         $this->removeWallet($order);
+        $discountAmount *= 100;
+        $tot = 0;
+        foreach ($order->getItems()->toArray() as $orderItem){
+            $adjustment = $this->adjustmentFactory->createNew();
+            $adjustment->setType(CreditInterface::TYPE);
 
-        $adjustmentRate = ($this->balance() * 100) / $order->getTotal();
+            if ($discountAmount > $orderItem->getTotal()){
+                $amount = -1 *  (($orderItem->getTotal())) ;
+                $tot +=$amount;
+                $discountAmount -= $orderItem->getTotal();
+                $adjustment->setAmount( $amount);
+                $adjustment->setLabel('Wallet');
+                $orderItem->addAdjustment($adjustment);
+            }
+            else{
+                $amount = -1 * ($discountAmount) ;
+                $tot +=$amount;
+                $adjustment->setAmount( $amount);
+                $adjustment->setLabel('Wallet');
+                $orderItem->addAdjustment($adjustment);
+                $discountAmount = 0;
+            }
+            if ($discountAmount <= 0){
+                break;
+            }
 
-        if ($adjustmentRate > 100) {
-            $adjustmentRate = 100;
         }
-
-        $adjustmentTotal = array_sum(
-                array_map(function (OrderItem $orderItem) use ($adjustmentRate) {
-                    $adjustment = $this->adjustmentFactory->createNew();
-                    $adjustment->setType(CreditInterface::TYPE);
-                    $amount = -1 * ($orderItem->getTotal() / 100) * $adjustmentRate;
-                    $adjustment->setAmount((int) $amount);
-                    $adjustment->setLabel('Wallet');
-                    $orderItem->addAdjustment($adjustment);
-
-                    return $adjustment->getAmount();
-                }, $order->getItems()->toArray())
-            ) * -1;
         $this->orderProcessor->process($order);
         $this->entityManager->flush();
 
-        return $adjustmentTotal > 0 ? $adjustmentTotal : 0;
+        return (int)($tot*-1);
     }
 
     public function removeWallet(Order $order)

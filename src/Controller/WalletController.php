@@ -10,6 +10,7 @@ use Sylius\Component\Locale\Context\LocaleContextInterface;
 use Sylius\Component\Order\Context\CompositeCartContext;
 use Sylius\Component\Order\Model\Order;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,9 +20,19 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Workouse\SyliusDigitalWalletPlugin\Entity\Credit;
 use Workouse\SyliusDigitalWalletPlugin\Form\Type\CreditType;
 use Workouse\SyliusDigitalWalletPlugin\Service\WalletService;
+use Webmozart\Assert\Assert;
 
 class WalletController extends AbstractController
 {
+    public function showAction($email): Response
+    {
+        $walletService = $this->get('workouse_digital_wallet.wallet_service');
+        $credit = $walletService->balanceByEmail($email);
+        return new JsonResponse([
+            'credit' => $credit / 100
+        ]);;
+    }
+
     public function indexAction($customerId): Response
     {
         $customer = $this->container->get('sylius.repository.customer')->findOneBy([
@@ -59,7 +70,7 @@ class WalletController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $credit = $form->getData();
-            $credit->setAmount($credit->getAmount()*100);
+            $credit->setAmount($credit->getAmount() * 100);
             $credit->setCustomer($customer);
 
             $em = $this->getDoctrine()->getManager();
@@ -82,6 +93,24 @@ class WalletController extends AbstractController
         ]);
     }
 
+    public function useCreditAction(Request $request): Response
+    {
+        $walletService = $this->get('workouse_digital_wallet.wallet_service');
+
+        Assert::notNull($request->get('email'), "Email is Null ");
+        Assert::notNull($request->get('amount'), "Amount is Null ");
+        Assert::notNull($request->get('token'), "Token is Null ");
+        $balance = $walletService->balanceByEmail($request->get('email')) / 100;
+        Assert::greaterThanEq($balance, $request->get('amount'), "credit must be less than or equal to your balance");
+
+        $orderRepository = $this->container->get('sylius.repository.order');
+        $order = $orderRepository->findCartByTokenValue($request->get('token'));
+        $amount = $walletService->useWallet($order, $request->get('amount'));
+        return new JsonResponse([
+            'amount' => $amount / 100
+        ]);
+    }
+
     public function useAction(Request $request)
     {
         $orderRepository = $this->container->get('sylius.repository.order');
@@ -90,6 +119,7 @@ class WalletController extends AbstractController
         $orderId = $compositeCartContext->getCart()->getId();
         /** @var Order $order */
         $order = $orderRepository->findCartById($orderId);
+
         /** @var WalletService $walletService */
         $walletService = $this->get('workouse_digital_wallet.wallet_service');
 
@@ -112,7 +142,7 @@ class WalletController extends AbstractController
 
         /** @var FlashBagInterface $flashBag */
         $flashBag = $session->getBag('flashes');
-        $flashBag->add('success', $translator->trans('workouse_digital_wallet.balance_used', ['amount' => $moneyFormatter->format($walletService->useWallet($order), $currencyCode, $localeCode)], 'flashes'));
+        $flashBag->add('success', $translator->trans('workouse_digital_wallet.balance_used', ['amount' => $moneyFormatter->format($walletService->useWallet($order, $request->get('amount')), $currencyCode, $localeCode)], 'flashes'));
 
         return new RedirectResponse($this->generateUrl('sylius_shop_cart_summary'));
     }
