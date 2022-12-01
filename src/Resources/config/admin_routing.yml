@@ -10,3 +10,11 @@ workouse_digital_wallet_credit_new:
   defaults:
     _controller: WorkouseSyliusDigitalWalletPlugin:Wallet:new
     customerId: ~
+
+
+workouse_digital_wallet_refund:
+  path: /order/{orderId}/refund
+  defaults:
+    _controller: WorkouseSyliusDigitalWalletPlugin:Wallet:refund
+    orderId: ~
+

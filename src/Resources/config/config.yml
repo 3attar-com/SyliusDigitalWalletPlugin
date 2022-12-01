@@ -1,12 +1,3 @@
 twig:
   globals:
     workouse_digital_wallet: '@workouse_digital_wallet.wallet_service'
-
-winzou_state_machine:
-  sylius_order_checkout:
-    callbacks:
-      after:
-        sylius_create_order:
-          on: ['complete']
-          do: ['@workouse_digital_wallet.wallet_service', 'detractBalance']
-          args: ['object']

@@ -36,3 +36,9 @@ services:
       - '@doctrine.orm.entity_manager'
       - '%workouse_digital_wallet.referrer%'
       - '%workouse_digital_wallet.invitee%'
+
+  3attar.wallet.listener.order_complete:
+    class: Workouse\SyliusDigitalWalletPlugin\EventListener\OrderCompletedListener
+    arguments: [ "@workouse_digital_wallet.wallet_service" ]
+    tags:
+      - { name: 'kernel.event_listener', event: 'sylius.order.post_complete' , method: 'detractBalance' }
