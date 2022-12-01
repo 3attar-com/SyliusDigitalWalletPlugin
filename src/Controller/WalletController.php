@@ -170,4 +170,15 @@ class WalletController extends AbstractController
 
         return new RedirectResponse($this->generateUrl('sylius_shop_cart_summary'));
     }
+
+    public function refundAction(Request $request)
+    {
+        $orderRepository = $this->container->get('sylius.repository.order');
+        $order = $orderRepository->findOneBy(['id' => $request->get('orderId')]);
+        /** @var WalletService $walletService */
+        $walletService = $this->get('workouse_digital_wallet.wallet_service');
+        $walletService->refundWallet($order);
+
+        return new RedirectResponse($this->generateUrl('sylius_admin_order_show' , ['id'=>$order->getId()]));
+    }
 }

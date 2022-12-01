@@ -145,4 +145,33 @@ class WalletService
         $this->orderProcessor->process($order);
         $this->entityManager->flush();
     }
+
+    public function refundWallet(OrderInterface $order)
+    {
+        $adjustment = array_sum(array_map(function (OrderItem $orderItem) {
+                return array_sum(array_map(function (Adjustment $adjustment) {
+                    if ($adjustment->getType() === CreditInterface::TYPE) {
+                        return $adjustment->getAmount();
+                    }
+                }, $orderItem->getAdjustments()->toArray()));
+            }, $order->getItems()->toArray())
+        );
+        if ($adjustment < 0) {
+
+            $this->removeWallet($order);
+
+            /** @var ShopUserInterface $user */
+            $user = $order->getUser();
+
+            $credit = new Credit();
+            $credit->setCustomer($user->getCustomer());
+            $credit->setAmount($adjustment * -1);
+            $credit->setAction(CreditInterface::BUY);
+            $credit->setCurrencyCode($this->currencyContext->getCurrencyCode());
+            $this->entityManager->persist($credit);
+            $this->orderProcessor->process($order);
+            $this->entityManager->flush();
+        }
+    }
+
 }
