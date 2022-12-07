@@ -181,4 +181,18 @@ class WalletController extends AbstractController
 
         return new RedirectResponse($this->generateUrl('sylius_admin_order_show' , ['id'=>$order->getId()]));
     }
+
+    public function removeCreditAction(Request $request):Response
+    {
+        $walletService = $this->get('workouse_digital_wallet.wallet_service');
+
+        Assert::notNull($request->get('email'), "Email is Null ");
+        Assert::notNull($request->get('token'), "Token is Null ");
+        $orderRepository = $this->container->get('sylius.repository.order');
+        $order = $orderRepository->findCartByTokenValue($request->get('token'));
+        $walletService->removeWallet($order);
+        return new JsonResponse([
+            'success' => true
+        ]);
+    }
 }
