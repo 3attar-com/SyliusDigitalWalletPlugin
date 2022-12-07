@@ -21,6 +21,8 @@ services:
       - '@sylius.context.currency'
       - '@sylius.factory.adjustment'
       - '@sylius.order_processing.order_processor.composite'
+      - '@sylius.shop_api_plugin.view_repository.cart_view_repository'
+      - '@fos_rest.view_handler'
 
   workouse_digital_wallet.block_event_listener.sylius.shop.cart.summary.totals:
     class: Sylius\Bundle\UiBundle\Block\BlockEventListener

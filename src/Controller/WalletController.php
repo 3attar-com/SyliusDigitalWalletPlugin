@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workouse\SyliusDigitalWalletPlugin\Controller;
 
+use FOS\RestBundle\View\View;
 use Sylius\Bundle\MoneyBundle\Formatter\MoneyFormatterInterface;
 use Sylius\Component\Currency\Context\CurrencyContextInterface;
 use Sylius\Component\Locale\Context\LocaleContextInterface;
@@ -106,9 +107,10 @@ class WalletController extends AbstractController
         $orderRepository = $this->container->get('sylius.repository.order');
         $order = $orderRepository->findCartByTokenValue($request->get('token'));
         $amount = $walletService->useWallet($order, $request->get('amount'));
-        return new JsonResponse([
-            'amount' => $amount / 100
-        ]);
+
+        $response = $walletService->getCart($request->get('token') , $amount);
+
+        return $response;
     }
 
     public function useAction(Request $request)
