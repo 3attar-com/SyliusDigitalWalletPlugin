@@ -12,3 +12,8 @@ workouse_digital_wallet_customer_credit_use:
   path: /shop-api/credit/use
   defaults:
     _controller: WorkouseSyliusDigitalWalletPlugin:Wallet:useCredit
+
+workouse_digital_wallet_customer_credit_remove:
+    path: /shop-api/credit/remove
+    defaults:
+        _controller: WorkouseSyliusDigitalWalletPlugin:Wallet:removeCredit
