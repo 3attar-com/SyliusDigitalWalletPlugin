@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Workouse\SyliusDigitalWalletPlugin\Service;
 use App\Entity\Customer\Customer;
 use Doctrine\ORM\EntityManager;
+use FOS\RestBundle\View\View;
+use FOS\RestBundle\View\ViewHandlerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Currency\Context\CurrencyContextInterface;
@@ -14,6 +16,8 @@ use Sylius\Component\Order\Model\Adjustment;
 use Sylius\Component\Order\Model\Order;
 use Sylius\Component\Order\Model\OrderItem;
 use Sylius\Component\Order\Processor\CompositeOrderProcessor;
+use Sylius\ShopApiPlugin\ViewRepository\Cart\CartViewRepositoryInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
 use Workouse\SyliusDigitalWalletPlugin\Entity\Credit;
 use Workouse\SyliusDigitalWalletPlugin\Entity\CreditInterface;
@@ -37,13 +41,21 @@ class WalletService
     /** @var CompositeOrderProcessor */
     private $orderProcessor;
 
+    /** @var CartViewRepositoryInterface */
+    private $cartQuery;
+
+    /** @var ViewHandlerInterface */
+    private $viewHandler;
+
     public function __construct(
         Security $security,
         EntityManager $entityManager,
         CurrencyConverterInterface $currencyConverter,
         CurrencyContextInterface $currencyContext,
         AdjustmentFactory $adjustmentFactory,
-        CompositeOrderProcessor $orderProcessor
+        CompositeOrderProcessor $orderProcessor,
+        CartViewRepositoryInterface $cartQuery,
+        ViewHandlerInterface $viewHandler
     ) {
         $this->security = $security;
         $this->entityManager = $entityManager;
@@ -51,6 +63,8 @@ class WalletService
         $this->currencyContext = $currencyContext;
         $this->adjustmentFactory = $adjustmentFactory;
         $this->orderProcessor = $orderProcessor;
+        $this->cartQuery = $cartQuery;
+        $this->viewHandler = $viewHandler;
     }
 
     public function balance($customer = null)
@@ -174,4 +188,17 @@ class WalletService
         }
     }
 
+    public function getCart($token , $amount) :Response
+    {
+       $response =  $this->viewHandler->handle(
+            View::create(
+                $this->cartQuery->getOneByToken($token),
+                Response::HTTP_OK
+            )
+        );
+        $response = json_decode($response->getContent(), true);
+        $response['totals']['wallet_used'] = $amount ;
+        
+        return new Response(json_encode($response));
+    }
 }
