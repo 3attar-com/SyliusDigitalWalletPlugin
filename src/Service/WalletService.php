@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
 use Workouse\SyliusDigitalWalletPlugin\Entity\Credit;
 use Workouse\SyliusDigitalWalletPlugin\Entity\CreditInterface;
+use Sylius\Bundle\ShopBundle\Calculator\OrderItemsSubtotalCalculatorInterface;
 class WalletService
 {
     /** @var Security */
@@ -47,6 +48,8 @@ class WalletService
     /** @var ViewHandlerInterface */
     private $viewHandler;
 
+    private $calculator;
+
     public function __construct(
         Security $security,
         EntityManager $entityManager,
@@ -55,7 +58,8 @@ class WalletService
         AdjustmentFactory $adjustmentFactory,
         CompositeOrderProcessor $orderProcessor,
         CartViewRepositoryInterface $cartQuery,
-        ViewHandlerInterface $viewHandler
+        ViewHandlerInterface $viewHandler,
+        OrderItemsSubtotalCalculatorInterface $calculator
     ) {
         $this->security = $security;
         $this->entityManager = $entityManager;
@@ -65,6 +69,7 @@ class WalletService
         $this->orderProcessor = $orderProcessor;
         $this->cartQuery = $cartQuery;
         $this->viewHandler = $viewHandler;
+        $this->calculator = $calculator;
     }
 
     public function balance($customer = null)
@@ -188,7 +193,7 @@ class WalletService
         }
     }
 
-    public function getCart($token , $amount) :Response
+    public function getCart($token , $amount , $order) :Response
     {
        $response =  $this->viewHandler->handle(
             View::create(
@@ -196,9 +201,10 @@ class WalletService
                 Response::HTTP_OK
             )
         );
+        $total = $this->calculator->getSubtotal($order);
         $response = json_decode($response->getContent(), true);
         $response['totals']['wallet_used'] = $amount ;
-        
+        $response['totals']['total'] = $total ;
         return new Response(json_encode($response));
     }
 }
