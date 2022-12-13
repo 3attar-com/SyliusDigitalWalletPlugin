@@ -108,7 +108,7 @@ class WalletController extends AbstractController
         $order = $orderRepository->findCartByTokenValue($request->get('token'));
         $amount = $walletService->useWallet($order, $request->get('amount'));
 
-        $response = $walletService->getCart($request->get('token') , $amount);
+        $response = $walletService->getCart($request->get('token') , $amount , $order ) ;
 
         return $response;
     }

@@ -23,6 +23,7 @@ services:
       - '@sylius.order_processing.order_processor.composite'
       - '@sylius.shop_api_plugin.view_repository.cart_view_repository'
       - '@fos_rest.view_handler'
+      - '@sylius.calculator.order_items_subtotal'
 
   workouse_digital_wallet.block_event_listener.sylius.shop.cart.summary.totals:
     class: Sylius\Bundle\UiBundle\Block\BlockEventListener
