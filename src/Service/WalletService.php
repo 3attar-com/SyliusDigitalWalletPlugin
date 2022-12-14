@@ -204,7 +204,7 @@ class WalletService
         $total = $this->calculator->getSubtotal($order);
         $response = json_decode($response->getContent(), true);
         $response['totals']['wallet_used'] = $amount ;
-        $response['totals']['total'] = $total ;
+        $response['totals']['items'] = $total ;
         return new Response(json_encode($response));
     }
 }
