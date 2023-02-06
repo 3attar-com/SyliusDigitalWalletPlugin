@@ -40,6 +40,11 @@ class Credit implements CreditInterface
      */
     protected $action;
 
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    protected $expiredAt;
+
     public function getId()
     {
         return $this->id;
@@ -84,4 +89,14 @@ class Credit implements CreditInterface
     {
         $this->action = $action;
     }
+    public function getExpiredAt()
+    {
+        return $this->expiredAt;
+    }
+
+    public function setExpiredAt($expiredAt)
+    {
+        return $this->expiredAt = $expiredAt;
+    }
+
 }

@@ -17,3 +17,12 @@ workouse_digital_wallet_customer_credit_remove:
     path: /shop-api/credit/remove
     defaults:
         _controller: WorkouseSyliusDigitalWalletPlugin:Wallet:removeCredit
+
+3attar_sylius_wallet_plugin_shop_account_index:
+    path: /{_locale}/wallet/index
+    methods: [GET]
+    defaults:
+        _controller: WorkouseSyliusDigitalWalletPlugin:Wallet:indexWallet
+        _sylius:
+            section: shop_account
+            template: "@WorkouseSyliusDigitalWalletPlugin/shop/index.html.twig"

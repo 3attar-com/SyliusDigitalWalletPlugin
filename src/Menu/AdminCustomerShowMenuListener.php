@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workouse\SyliusDigitalWalletPlugin\Menu;
 
 use Sylius\Bundle\AdminBundle\Event\CustomerShowMenuBuilderEvent;
+use Sylius\Bundle\UiBundle\Menu\Event\MenuBuilderEvent;
 
 final class AdminCustomerShowMenuListener
 {
@@ -24,5 +25,17 @@ final class AdminCustomerShowMenuListener
                 ->setLabelAttribute('icon', 'unhide')
                 ->setLabelAttribute('color', 'blue');
         }
+    }
+    public function addAccountMenuItems(MenuBuilderEvent $event): void
+    {
+        $menu = $event->getMenu();
+
+        $menu
+            ->addChild('wallet', [
+                'route' => '3attar_sylius_wallet_plugin_shop_account_index'
+            ])
+            ->setLabel('app.ui.credits')
+            ->setLabelAttribute('icon', 'bullhorn')
+        ;
     }
 }
