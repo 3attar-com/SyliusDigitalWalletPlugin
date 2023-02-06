@@ -78,7 +78,9 @@ class WalletService
         $user = $this->security->getUser();
 
         return array_sum(array_map(function (Credit $credit) {
-            return $this->currencyConverter->convert($credit->getAmount(), $credit->getCurrencyCode(), $this->currencyContext->getCurrencyCode());
+                return $credit->getexpiredAt() > new \DateTime('@'.strtotime('now')) || $credit->getexpiredAt() == null?
+                    $this->currencyConverter->convert($credit->getAmount(), $credit->getCurrencyCode(), $this->currencyContext->getCurrencyCode())
+                    : 0;
         }, $this->entityManager->getRepository(Credit::class)->findBy([
             'customer' => $customer ? $customer : $user->getCustomer(),
         ])));
@@ -206,5 +208,19 @@ class WalletService
         $response['totals']['wallet_used'] = $amount ;
         $response['totals']['items'] = $total ;
         return new Response(json_encode($response));
+    }
+
+    public function addCreditToCustomer($customer , $note , $data)
+    {
+        $date = \DateTime::createFromFormat('d/m/Y',$data['expiredAt']);
+
+        $credit = new Credit();
+        $credit->setCustomer($customer);
+        $credit->setAmount($data['wallet']);
+        $credit->setAction($note);
+        $credit->setExpiredAt($date);
+        $credit->setCurrencyCode($this->currencyContext->getCurrencyCode());
+        $this->entityManager->persist($credit);
+        $this->entityManager->flush();
     }
 }
