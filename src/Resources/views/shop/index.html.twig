@@ -1,0 +1,31 @@
+{% extends '@SyliusShop/Account/layout.html.twig' %}
+
+{% block title %}{{ 'odiseo_sylius_referrals_plugin.ui.affiliates_program'|trans }} | {{ parent() }}{% endblock %}
+
+{% block subcontent %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th> </th>
+            <th>Offer </th>
+            <th>Description</th>
+            <th>
+                Action
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for index, product in products %}
+            <tr>
+                <td> {{ index+1}} </td>
+                <td> {{  product.product_name}}   </td>
+                <td> {{  (product.product_description ) }}  </td>
+                <td>
+                    <a  class="btn btn-success" href="/credit/pay/{{ product.id }}"> pay </a>
+                </td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+{% endblock %}

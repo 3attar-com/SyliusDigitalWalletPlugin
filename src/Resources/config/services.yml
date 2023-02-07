@@ -45,3 +45,8 @@ services:
     arguments: [ "@workouse_digital_wallet.wallet_service" ]
     tags:
       - { name: 'kernel.event_listener', event: 'sylius.order.post_complete' , method: 'detractBalance' }
+
+  3attar.event_listener.shop.account_menu:
+      class: Workouse\SyliusDigitalWalletPlugin\Menu\AdminCustomerShowMenuListener
+      tags:
+          - { name: kernel.event_listener, event: sylius.menu.shop.account, method: addAccountMenuItems }

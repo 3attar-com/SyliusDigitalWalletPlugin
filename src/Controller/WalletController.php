@@ -197,4 +197,13 @@ class WalletController extends AbstractController
             'success' => true
         ]);
     }
+
+    public function indexWalletAction(Request $request)
+    {
+        $paymobService = $this->get('attar.service.paymob');
+        $products = $paymobService->getProducts();
+        return $this->render('@WorkouseSyliusDigitalWalletPlugin/shop/index.html.twig',[
+            'products'=>$products
+        ]);
+    }
 }
