@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workouse\SyliusDigitalWalletPlugin\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Sylius\Component\Resource\Model\TimestampableTrait;
 
 /**
  * @ORM\Entity()
@@ -12,6 +13,25 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Credit implements CreditInterface
 {
+    use TimestampableTrait;
+
+    /**
+     * @ORM\Column(type="datetime",columnDefinition="DATETIME on create CURRENT_TIMESTAMP"))
+     * @var \datetime
+     */
+
+    protected $createdAt;
+    /**
+     * @ORM\Column(type="datetime",columnDefinition="DATETIME on update CURRENT_TIMESTAMP"))
+     * @var \datetime
+     */
+    protected $updatedAt;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTime();
+    }
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue(strategy="AUTO")
