@@ -16,14 +16,12 @@ class Credit implements CreditInterface
     use TimestampableTrait;
 
     /**
-     * @ORM\Column(type="datetime",columnDefinition="DATETIME on create CURRENT_TIMESTAMP"))
-     * @var \datetime
+     * @ORM\Column(type="datetime", options={"default": "CURRENT_TIMESTAMP"})
      */
-
     protected $createdAt;
+
     /**
-     * @ORM\Column(type="datetime",columnDefinition="DATETIME on update CURRENT_TIMESTAMP"))
-     * @var \datetime
+     * @ORM\Column(type="datetime", options={"default": "CURRENT_TIMESTAMP", "on update": "CURRENT_TIMESTAMP"})
      */
     protected $updatedAt;
 
