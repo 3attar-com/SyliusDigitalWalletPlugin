@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Workouse\SyliusDigitalWalletPlugin\Service;
 use App\Entity\Customer\Customer;
+use App\Entity\Product\Product;
 use Doctrine\ORM\EntityManager;
 use FOS\RestBundle\View\View;
 use FOS\RestBundle\View\ViewHandlerInterface;
+use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Currency\Context\CurrencyContextInterface;
@@ -50,6 +52,9 @@ class WalletService
 
     private $calculator;
 
+    private $logger;
+
+    private $taxonCreditId;
     public function __construct(
         Security $security,
         EntityManager $entityManager,
@@ -59,7 +64,9 @@ class WalletService
         CompositeOrderProcessor $orderProcessor,
         CartViewRepositoryInterface $cartQuery,
         ViewHandlerInterface $viewHandler,
-        OrderItemsSubtotalCalculatorInterface $calculator
+        OrderItemsSubtotalCalculatorInterface $calculator,
+        LoggerInterface $logger,
+        $taxonCreditId
     ) {
         $this->security = $security;
         $this->entityManager = $entityManager;
@@ -70,6 +77,8 @@ class WalletService
         $this->cartQuery = $cartQuery;
         $this->viewHandler = $viewHandler;
         $this->calculator = $calculator;
+        $this->logger = $logger;
+        $this->taxonCreditId = $taxonCreditId;
     }
 
     public function balance($customer = null)
@@ -115,6 +124,8 @@ class WalletService
             $this->entityManager->persist($credit);
             $this->orderProcessor->process($order);
             $this->entityManager->flush();
+            $adjustment = $adjustment / 100;
+            $this->logger->info("Wallet used for order #[{$order->getId()}] — amount deducted: SAR { $adjustment }");
         }
     }
 
@@ -219,8 +230,14 @@ class WalletService
         $credit->setAmount($data['wallet']);
         $credit->setAction($note);
         $credit->setExpiredAt($date);
+        $credit->setUpdatedAt($date);
         $credit->setCurrencyCode($this->currencyContext->getCurrencyCode());
         $this->entityManager->persist($credit);
         $this->entityManager->flush();
+    }
+
+    public function getProducts()
+    {
+        return $this->entityManager->getRepository(Product::class)->findByTaxon($this->taxonCreditId);
     }
 }
