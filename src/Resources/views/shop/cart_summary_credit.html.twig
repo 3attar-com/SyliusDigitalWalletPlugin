@@ -20,7 +20,7 @@
                         onclick="this.parentNode.querySelector('input[type=number]').stepDown();return false;"><i
                             class="icon-minus"></i></button>
                 <input type="number" id="sylius_cart_items_0_quantity" name="amount" required="required" min="1"
-                       value="{{ workouse_digital_wallet.balance/100 }}" max="{{ workouse_digital_wallet.balance/100 }}"
+                       value="{{ (workouse_digital_wallet.balance +  adjustmentTotal )/100 }}" max="{{( workouse_digital_wallet.balance +  adjustmentTotal)/100 }}"
                        class="form-control">
                 <button class="plus"
                         onclick="this.parentNode.querySelector('input[type=number]').stepUp();return false;"><i
