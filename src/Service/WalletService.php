@@ -13,6 +13,7 @@ use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Currency\Context\CurrencyContextInterface;
 use Sylius\Component\Currency\Converter\CurrencyConverterInterface;
+use Sylius\Component\Locale\Context\LocaleContextInterface;
 use Sylius\Component\Order\Factory\AdjustmentFactory;
 use Sylius\Component\Order\Model\Adjustment;
 use Sylius\Component\Order\Model\Order;
@@ -53,6 +54,7 @@ class WalletService
     private $calculator;
 
     private $logger;
+    private $localeContext;
 
     private $taxonCreditId;
     public function __construct(
@@ -66,7 +68,8 @@ class WalletService
         ViewHandlerInterface $viewHandler,
         OrderItemsSubtotalCalculatorInterface $calculator,
         LoggerInterface $logger,
-        $taxonCreditId
+        $taxonCreditId,
+        LocaleContextInterface $localeContext
     ) {
         $this->security = $security;
         $this->entityManager = $entityManager;
@@ -79,6 +82,7 @@ class WalletService
         $this->calculator = $calculator;
         $this->logger = $logger;
         $this->taxonCreditId = $taxonCreditId;
+        $this->localeContext = $localeContext;
     }
 
     public function balance($customer = null)
@@ -238,6 +242,6 @@ class WalletService
 
     public function getProducts()
     {
-        return $this->entityManager->getRepository(Product::class)->findByTaxon($this->taxonCreditId);
+        return $this->entityManager->getRepository(Product::class)->findByTaxon($this->taxonCreditId, $this->localeContext->getLocaleCode());
     }
 }
