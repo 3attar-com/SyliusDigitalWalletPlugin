@@ -26,6 +26,7 @@ services:
       - '@sylius.calculator.order_items_subtotal'
       - '@monolog.logger.wallet'
       - '%env(TAXON_CREDIT_ID)%'
+      - '@sylius.context.locale'
 
   workouse_digital_wallet.block_event_listener.sylius.shop.cart.summary.totals:
     class: Sylius\Bundle\UiBundle\Block\BlockEventListener
