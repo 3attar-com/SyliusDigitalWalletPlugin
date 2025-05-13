@@ -44,19 +44,11 @@
 
     <br>
     {% set adjustmentTotal = 0 %}
-    {% for item in settings.cart.items %}
-        {% for adjustment in item.adjustments %}
-            {% if adjustment.type == 'wallet' %}
-                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+
+    {% for item in settings.cart.getAdjustments %}
+            {% if item.type == 'wallet' %}
+                {% set adjustmentTotal = adjustmentTotal + item.amount %}
             {% endif %}
-        {% endfor %}
-    {% endfor %}
-    {% for item in settings.cart.shipments %}
-        {% for adjustment in item.adjustments %}
-            {% if adjustment.type == 'wallet' %}
-                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
-            {% endif %}
-        {% endfor %}
     {% endfor %}
     {% if adjustmentTotal < 0 %}
         <table class="ui very basic table">

@@ -139,51 +139,23 @@ class WalletService
     public function useWallet(Order $order , $discountAmount)
     {
         $this->removeWallet($order);
-        $discountAmount *= 100;
-        $tot = 0;
-        foreach ($order->getItems()->toArray() as $orderItem){
-            $adjustment = $this->adjustmentFactory->createNew();
-            $adjustment->setType(CreditInterface::TYPE);
-
-            if ($discountAmount > $orderItem->getTotal()){
-                $amount = -1 *  (($orderItem->getTotal())) ;
-                $tot +=$amount;
-                $discountAmount -= $orderItem->getTotal();
-                $adjustment->setAmount( $amount);
-                $adjustment->setLabel('Wallet');
-                $orderItem->addAdjustment($adjustment);
-            }
-            else{
-                $amount = -1 * ($discountAmount) ;
-                $tot +=$amount;
-                $adjustment->setAmount( $amount);
-                $adjustment->setLabel('Wallet');
-                $orderItem->addAdjustment($adjustment);
-                $discountAmount = 0;
-            }
-            if ($discountAmount <= 0){
-                break;
-            }
-
-        }
-
+        $orderTotal = $order->getTotal();
         $adjustment = $this->createAdjustment();
+        $discountAmount = $discountAmount * 100;
+
+
         $adjustment->setType(CreditInterface::TYPE);
-        $shipment = $order->getShipments()->first();
-        $maxDiscount = ( $shipment->getAdjustmentsTotal(AdjustmentInterface::SHIPPING_ADJUSTMENT) + $shipment->getAdjustmentsTotal(AdjustmentInterface::ORDER_SHIPPING_PROMOTION_ADJUSTMENT));
-        if ($discountAmount > $maxDiscount) {
-            $adjustmentAmount = $maxDiscount;
+        if ($orderTotal > $discountAmount)  {
+            $adjustment->setAmount(-$discountAmount );
+        }   else    {
+            $adjustment->setAmount(-$orderTotal);
         }
-        else {
-            $adjustmentAmount = $discountAmount;
-        }
-        $tot -= $adjustmentAmount;
-        $adjustment->setAmount(-$adjustmentAmount);
-        $adjustment->setLabel('Wallet shipping discount');
-        $shipment->addAdjustment($adjustment);
-        $this->orderProcessor->process($order);
+        $adjustment->setNeutral(false);
+        $adjustment->setLabel('Wallet Order  Adjustment');
+        $order->addAdjustment($adjustment);
         $this->entityManager->flush();
-        return (int)($tot*-1);
+        return (int)($orderTotal > $discountAmount ? -$discountAmount : -$orderTotal);
+
     }
     private function createAdjustment(
     ): OrderAdjustmentInterface {
@@ -195,7 +167,10 @@ class WalletService
     }
     public function removeWallet(Order $order)
     {
+
         $order->removeAdjustmentsRecursively(CreditInterface::TYPE);
+
+        $order->recalculateAdjustmentsTotal();
         $this->orderProcessor->process($order);
         $this->entityManager->flush();
     }
@@ -240,6 +215,7 @@ class WalletService
         $response = json_decode($response->getContent(), true);
         $response['totals']['wallet_used'] = $amount ;
         $response['totals']['items'] = $total ;
+        dd($order);
         return new Response(json_encode($response));
     }
 
