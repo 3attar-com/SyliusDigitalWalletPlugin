@@ -162,7 +162,7 @@ class WalletController extends AbstractController
         $walletService = $this->get('workouse_digital_wallet.wallet_service');
 
         $walletService->removeWallet($order);
-
+        $order->recalculateAdjustmentsTotal();
         /** @var SessionInterface $session */
         $session = $request->getSession();
 

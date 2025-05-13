@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManager;
 use FOS\RestBundle\View\View;
 use FOS\RestBundle\View\ViewHandlerInterface;
 use Psr\Log\LoggerInterface;
+use Sylius\Component\Core\Model\AdjustmentInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Currency\Context\CurrencyContextInterface;
@@ -16,9 +17,11 @@ use Sylius\Component\Currency\Converter\CurrencyConverterInterface;
 use Sylius\Component\Locale\Context\LocaleContextInterface;
 use Sylius\Component\Order\Factory\AdjustmentFactory;
 use Sylius\Component\Order\Model\Adjustment;
+use Sylius\Component\Order\Model\AdjustmentInterface as OrderAdjustmentInterface;
 use Sylius\Component\Order\Model\Order;
 use Sylius\Component\Order\Model\OrderItem;
 use Sylius\Component\Order\Processor\CompositeOrderProcessor;
+use Sylius\Component\Promotion\Model\PromotionInterface;
 use Sylius\ShopApiPlugin\ViewRepository\Cart\CartViewRepositoryInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
@@ -163,21 +166,36 @@ class WalletService
             }
 
         }
+
+        $adjustment = $this->createAdjustment();
+        $adjustment->setType(CreditInterface::TYPE);
+        $shipment = $order->getShipments()->first();
+        $maxDiscount = ( $shipment->getAdjustmentsTotal(AdjustmentInterface::SHIPPING_ADJUSTMENT) + $shipment->getAdjustmentsTotal(AdjustmentInterface::ORDER_SHIPPING_PROMOTION_ADJUSTMENT));
+        if ($discountAmount > $maxDiscount) {
+            $adjustmentAmount = $maxDiscount;
+        }
+        else {
+            $adjustmentAmount = $discountAmount;
+        }
+        $tot -= $adjustmentAmount;
+        $adjustment->setAmount(-$adjustmentAmount);
+        $adjustment->setLabel('Wallet shipping discount');
+        $shipment->addAdjustment($adjustment);
         $this->orderProcessor->process($order);
         $this->entityManager->flush();
-
         return (int)($tot*-1);
     }
+    private function createAdjustment(
+    ): OrderAdjustmentInterface {
 
+        $adjustment = $this->adjustmentFactory->createNew();
+        $adjustment->setLabel('wallet');
+
+        return $adjustment;
+    }
     public function removeWallet(Order $order)
     {
-        array_map(function (OrderItem $orderItem) {
-            array_map(function (Adjustment $adjustment) use ($orderItem) {
-                if ($adjustment->getType() === CreditInterface::TYPE) {
-                    $orderItem->removeAdjustment($adjustment);
-                }
-            }, $orderItem->getAdjustments()->toArray());
-        }, $order->getItems()->toArray());
+        $order->removeAdjustmentsRecursively(CreditInterface::TYPE);
         $this->orderProcessor->process($order);
         $this->entityManager->flush();
     }
