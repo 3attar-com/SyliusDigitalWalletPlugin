@@ -7,6 +7,13 @@
             {% endif %}
         {% endfor %}
     {% endfor %}
+    {% for item in settings.cart.shipments %}
+        {% for adjustment in item.adjustments %}
+            {% if adjustment.type == 'wallet' %}
+                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
 {% if is_granted('ROLE_USER') %}
     {{ 'workouse_digital_wallet.shop.ui.available_balance'|trans }}
     <b>{{ money.format(workouse_digital_wallet.balance + adjustmentTotal, sylius.currencyCode) }}</b>
@@ -38,6 +45,13 @@
     <br>
     {% set adjustmentTotal = 0 %}
     {% for item in settings.cart.items %}
+        {% for adjustment in item.adjustments %}
+            {% if adjustment.type == 'wallet' %}
+                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    {% for item in settings.cart.shipments %}
         {% for adjustment in item.adjustments %}
             {% if adjustment.type == 'wallet' %}
                 {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
