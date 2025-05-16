@@ -7,6 +7,13 @@
             {% endif %}
         {% endfor %}
     {% endfor %}
+    {% for item in settings.cart.shipments %}
+        {% for adjustment in item.adjustments %}
+            {% if adjustment.type == 'wallet' %}
+                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
 {% if is_granted('ROLE_USER') %}
     {{ 'workouse_digital_wallet.shop.ui.available_balance'|trans }}
     <b>{{ money.format(workouse_digital_wallet.balance + adjustmentTotal, sylius.currencyCode) }}</b>
@@ -20,7 +27,7 @@
                         onclick="this.parentNode.querySelector('input[type=number]').stepDown();return false;"><i
                             class="icon-minus"></i></button>
                 <input type="number" id="sylius_cart_items_0_quantity" name="amount" required="required" min="1"
-                       value="{{ workouse_digital_wallet.balance/100 }}" max="{{ workouse_digital_wallet.balance/100 }}"
+                       value="{{ (workouse_digital_wallet.balance +  adjustmentTotal )/100 }}" max="{{( workouse_digital_wallet.balance +  adjustmentTotal)/100 }}"
                        class="form-control">
                 <button class="plus"
                         onclick="this.parentNode.querySelector('input[type=number]').stepUp();return false;"><i
@@ -37,12 +44,11 @@
 
     <br>
     {% set adjustmentTotal = 0 %}
-    {% for item in settings.cart.items %}
-        {% for adjustment in item.adjustments %}
-            {% if adjustment.type == 'wallet' %}
-                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+
+    {% for item in settings.cart.getAdjustments %}
+            {% if item.type == 'wallet' %}
+                {% set adjustmentTotal = adjustmentTotal + item.amount %}
             {% endif %}
-        {% endfor %}
     {% endfor %}
     {% if adjustmentTotal < 0 %}
         <table class="ui very basic table">

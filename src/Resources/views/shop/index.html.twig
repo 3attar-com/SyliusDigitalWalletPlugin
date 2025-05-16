@@ -7,25 +7,110 @@
         <thead>
         <tr>
             <th> </th>
-            <th>Offer </th>
-            <th>Description</th>
-            <th>
-                Action
-            </th>
+            <th> {{ 'sylius.ui.offer'|trans }} </th>
+            <th> {{ 'sylius.ui.action'|trans }}</th>
         </tr>
         </thead>
         <tbody>
         {% for index, product in products %}
             <tr>
-                <td> {{ index+1}} </td>
-                <td> {{  product.product_name}}   </td>
-                <td> {{  (product.product_description ) }}  </td>
+                <td> {{ index + 1 }} </td>
+                <td> {{ product.getName() }} </td>
                 <td>
-                    <a  class="btn btn-success" href="/credit/pay/{{ product.id }}"> pay </a>
+                    <button
+                        type="button"
+                        class="btn btn-outline-success select-button"
+                        data-id="{{ product.id }}"
+                    >
+                        {{ 'sylius.ui.select'|trans }}
+                    </button>
                 </td>
             </tr>
         {% endfor %}
-
         </tbody>
     </table>
+
+    <div id="submit-container" class="mt-3" style="display: none;">
+        <div class="payment-options">
+            {% set supportedImages = {
+                'paymob': 'visa-mastercard.png',
+                'hyperpay': 'visa-mastercard.png',
+                'mada': 'mada.png',
+                'applepay': 'applepay.png',
+                'tamara': 'tamara.png'
+            } %}
+
+            {% for method in payments %}
+                {% if supportedImages[method.code] is defined %}
+                    <form method="POST" action="{{ path('attar.credit.buy') }}" class="payment-option" style="border:none; background:none; padding:0;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('process_payment') }}">
+                        <input type="hidden" name="method" value="{{ method.code }}">
+                        <input type="hidden" name="product_id" class="selected-product-id" value="">
+
+                        <button type="submit" style="border:none; background:none; padding:0;">
+                            <img src="{{ asset('assets/shop/img/payments-logo/' ~ supportedImages[method.code]) }}" alt="{{ method.code }}">
+                        </button>
+                    </form>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <style>
+        .payment-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-top: 16px;
+            justify-content: flex-start;
+        }
+        .payment-option {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px 10px;
+            background-color: #fff;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .payment-option:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .payment-option img {
+            max-height: 32px;
+            width: auto;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const buttons = document.querySelectorAll(".select-button");
+            const submitContainer = document.getElementById("submit-container");
+            const hiddenInputs = document.querySelectorAll(".selected-product-id");
+
+            buttons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    // Reset all buttons
+                    buttons.forEach(b => b.classList.remove("btn-success"));
+                    buttons.forEach(b => b.classList.add("btn-outline-success"));
+
+                    // Activate the selected one
+                    btn.classList.remove("btn-outline-success");
+                    btn.classList.add("btn-success");
+
+                    const selectedId = btn.getAttribute("data-id");
+
+                    // Set selected product ID in all forms
+                    hiddenInputs.forEach(input => {
+                        input.value = selectedId;
+                    });
+
+                    submitContainer.style.display = "block";
+                });
+            });
+        });
+    </script>
 {% endblock %}

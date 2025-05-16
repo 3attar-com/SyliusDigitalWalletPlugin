@@ -24,6 +24,9 @@ services:
       - '@sylius.shop_api_plugin.view_repository.cart_view_repository'
       - '@fos_rest.view_handler'
       - '@sylius.calculator.order_items_subtotal'
+      - '@monolog.logger.wallet'
+      - '%env(TAXON_CREDIT_ID)%'
+      - '@sylius.context.locale'
 
   workouse_digital_wallet.block_event_listener.sylius.shop.cart.summary.totals:
     class: Sylius\Bundle\UiBundle\Block\BlockEventListener
@@ -44,9 +47,11 @@ services:
     class: Workouse\SyliusDigitalWalletPlugin\EventListener\OrderCompletedListener
     arguments: [ "@workouse_digital_wallet.wallet_service" ]
     tags:
-      - { name: 'kernel.event_listener', event: 'sylius.order.post_complete' , method: 'detractBalance' }
+      - { name: 'kernel.event_listener', event: 'sylius.payment.post_complete' , method: 'detractBalance' }
 
   3attar.event_listener.shop.account_menu:
       class: Workouse\SyliusDigitalWalletPlugin\Menu\AdminCustomerShowMenuListener
       tags:
           - { name: kernel.event_listener, event: sylius.menu.shop.account, method: addAccountMenuItems }
+    
+

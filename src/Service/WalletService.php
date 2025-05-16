@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace Workouse\SyliusDigitalWalletPlugin\Service;
 use App\Entity\Customer\Customer;
+use App\Entity\Product\Product;
 use Doctrine\ORM\EntityManager;
 use FOS\RestBundle\View\View;
 use FOS\RestBundle\View\ViewHandlerInterface;
+use Psr\Log\LoggerInterface;
+use Sylius\Component\Core\Model\AdjustmentInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Currency\Context\CurrencyContextInterface;
 use Sylius\Component\Currency\Converter\CurrencyConverterInterface;
+use Sylius\Component\Locale\Context\LocaleContextInterface;
 use Sylius\Component\Order\Factory\AdjustmentFactory;
 use Sylius\Component\Order\Model\Adjustment;
+use Sylius\Component\Order\Model\AdjustmentInterface as OrderAdjustmentInterface;
 use Sylius\Component\Order\Model\Order;
 use Sylius\Component\Order\Model\OrderItem;
 use Sylius\Component\Order\Processor\CompositeOrderProcessor;
+use Sylius\Component\Promotion\Model\PromotionInterface;
 use Sylius\ShopApiPlugin\ViewRepository\Cart\CartViewRepositoryInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
@@ -50,6 +56,10 @@ class WalletService
 
     private $calculator;
 
+    private $logger;
+    private $localeContext;
+
+    private $taxonCreditId;
     public function __construct(
         Security $security,
         EntityManager $entityManager,
@@ -59,7 +69,10 @@ class WalletService
         CompositeOrderProcessor $orderProcessor,
         CartViewRepositoryInterface $cartQuery,
         ViewHandlerInterface $viewHandler,
-        OrderItemsSubtotalCalculatorInterface $calculator
+        OrderItemsSubtotalCalculatorInterface $calculator,
+        LoggerInterface $logger,
+        $taxonCreditId,
+        LocaleContextInterface $localeContext
     ) {
         $this->security = $security;
         $this->entityManager = $entityManager;
@@ -70,6 +83,9 @@ class WalletService
         $this->cartQuery = $cartQuery;
         $this->viewHandler = $viewHandler;
         $this->calculator = $calculator;
+        $this->logger = $logger;
+        $this->taxonCreditId = $taxonCreditId;
+        $this->localeContext = $localeContext;
     }
 
     public function balance($customer = null)
@@ -115,54 +131,46 @@ class WalletService
             $this->entityManager->persist($credit);
             $this->orderProcessor->process($order);
             $this->entityManager->flush();
+            $adjustment = $adjustment / 100;
+            $this->logger->info("Wallet used for order #[{$order->getId()}] — amount deducted: SAR { $adjustment }");
         }
     }
 
     public function useWallet(Order $order , $discountAmount)
     {
         $this->removeWallet($order);
-        $discountAmount *= 100;
-        $tot = 0;
-        foreach ($order->getItems()->toArray() as $orderItem){
-            $adjustment = $this->adjustmentFactory->createNew();
-            $adjustment->setType(CreditInterface::TYPE);
+        $orderTotal = $order->getTotal();
+        $adjustment = $this->createAdjustment();
+        $discountAmount = $discountAmount * 100;
 
-            if ($discountAmount > $orderItem->getTotal()){
-                $amount = -1 *  (($orderItem->getTotal())) ;
-                $tot +=$amount;
-                $discountAmount -= $orderItem->getTotal();
-                $adjustment->setAmount( $amount);
-                $adjustment->setLabel('Wallet');
-                $orderItem->addAdjustment($adjustment);
-            }
-            else{
-                $amount = -1 * ($discountAmount) ;
-                $tot +=$amount;
-                $adjustment->setAmount( $amount);
-                $adjustment->setLabel('Wallet');
-                $orderItem->addAdjustment($adjustment);
-                $discountAmount = 0;
-            }
-            if ($discountAmount <= 0){
-                break;
-            }
 
+        $adjustment->setType(CreditInterface::TYPE);
+        if ($orderTotal > $discountAmount)  {
+            $adjustment->setAmount(-$discountAmount );
+        }   else    {
+            $adjustment->setAmount(-$orderTotal);
         }
-        $this->orderProcessor->process($order);
+        $adjustment->setNeutral(false);
+        $adjustment->setLabel('Wallet Order  Adjustment');
+        $order->addAdjustment($adjustment);
         $this->entityManager->flush();
+        return (int)($orderTotal > $discountAmount ? -$discountAmount : -$orderTotal);
 
-        return (int)($tot*-1);
     }
+    private function createAdjustment(
+    ): OrderAdjustmentInterface {
 
+        $adjustment = $this->adjustmentFactory->createNew();
+        $adjustment->setLabel('wallet');
+
+        return $adjustment;
+    }
     public function removeWallet(Order $order)
     {
-        array_map(function (OrderItem $orderItem) {
-            array_map(function (Adjustment $adjustment) use ($orderItem) {
-                if ($adjustment->getType() === CreditInterface::TYPE) {
-                    $orderItem->removeAdjustment($adjustment);
-                }
-            }, $orderItem->getAdjustments()->toArray());
-        }, $order->getItems()->toArray());
+
+        $order->removeAdjustmentsRecursively(CreditInterface::TYPE);
+
+        $order->recalculateAdjustmentsTotal();
         $this->orderProcessor->process($order);
         $this->entityManager->flush();
     }
@@ -207,6 +215,7 @@ class WalletService
         $response = json_decode($response->getContent(), true);
         $response['totals']['wallet_used'] = $amount ;
         $response['totals']['items'] = $total ;
+        dd($order);
         return new Response(json_encode($response));
     }
 
@@ -219,8 +228,14 @@ class WalletService
         $credit->setAmount($data['wallet']);
         $credit->setAction($note);
         $credit->setExpiredAt($date);
+        $credit->setUpdatedAt($date);
         $credit->setCurrencyCode($this->currencyContext->getCurrencyCode());
         $this->entityManager->persist($credit);
         $this->entityManager->flush();
+    }
+
+    public function getProducts()
+    {
+        return $this->entityManager->getRepository(Product::class)->findByTaxon($this->taxonCreditId, $this->localeContext->getLocaleCode());
     }
 }

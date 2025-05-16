@@ -162,7 +162,7 @@ class WalletController extends AbstractController
         $walletService = $this->get('workouse_digital_wallet.wallet_service');
 
         $walletService->removeWallet($order);
-
+        $order->recalculateAdjustmentsTotal();
         /** @var SessionInterface $session */
         $session = $request->getSession();
 
@@ -200,10 +200,15 @@ class WalletController extends AbstractController
 
     public function indexWalletAction(Request $request)
     {
-        $paymobService = $this->get('attar.service.paymob');
-        $products = $paymobService->getProducts();
+        $channelContext = $this->get('sylius.context.channel');
+        $walletService = $this->get('workouse_digital_wallet.wallet_service');
+        $paymentMethodRepo = $this->container->get('sylius.repository.payment_method');
+        $payments = $paymentMethodRepo->findEnabledForChannel($channelContext->getChannel());
+        $products = $walletService->getProducts();
         return $this->render('@WorkouseSyliusDigitalWalletPlugin/shop/index.html.twig',[
-            'products'=>$products
+            'products'=>$products,
+            'payments' => $payments
         ]);
     }
+
 }
