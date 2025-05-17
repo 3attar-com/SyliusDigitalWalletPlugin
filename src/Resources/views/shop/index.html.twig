@@ -3,26 +3,26 @@
 {% block title %}{{ 'odiseo_sylius_referrals_plugin.ui.affiliates_program'|trans }} | {{ parent() }}{% endblock %}
 
 {% block subcontent %}
-    <table class="table">
-        <thead>
+    <table class="table table-hover table-bordered table-striped align-middle shadow-sm">
+        <thead class="thead-light">
         <tr>
-            <th> </th>
-            <th> {{ 'sylius.ui.offer'|trans }} </th>
-            <th> {{ 'sylius.ui.action'|trans }}</th>
+            <th scope="col" class="text-center" style="width: 50px;">#</th>
+            <th scope="col">{{ 'sylius.ui.offer'|trans }}</th>
+            <th scope="col" class="text-center">{{ 'sylius.ui.action'|trans }}</th>
         </tr>
         </thead>
         <tbody>
         {% for index, product in products %}
             <tr>
-                <td> {{ index + 1 }} </td>
-                <td> {{ product.getName() }} </td>
-                <td>
+                <td class="text-center fw-bold">{{ index + 1 }}</td>
+                <td>{{ product.getName() }}</td>
+                <td class="text-center">
                     <button
                         type="button"
-                        class="btn btn-outline-success select-button"
+                        class="btn btn-outline-primary btn-sm select-button"
                         data-id="{{ product.id }}"
                     >
-                        {{ 'sylius.ui.select'|trans }}
+                        <i class="bi bi-check-circle"></i> {{ 'sylius.ui.select'|trans }}
                     </button>
                 </td>
             </tr>
@@ -30,34 +30,101 @@
         </tbody>
     </table>
 
-    <div id="submit-container" class="mt-3" style="display: none;">
+    <div id="submit-container" class="mt-4" style="display: none;">
+        <p class="payment-heading">
+            {{ 'Choose your preferred payment method to pay for topup'|trans }}
+        </p>
         <div class="payment-options">
             {% set supportedImages = {
                 'paymob': 'visa-mastercard.png',
                 'hyperpay': 'visa-mastercard.png',
-                'mada': 'mada.png',
+                'mada': 'mada.svg',
                 'applepay': 'applepay.png',
                 'tamara': 'tamara.png'
             } %}
 
             {% for method in payments %}
                 {% if supportedImages[method.code] is defined %}
-                    <form method="POST" action="{{ path('attar.credit.buy') }}" class="payment-option" style="border:none; background:none; padding:0;">
+                    <form method="POST" action="{{ path('attar.credit.buy') }}" class="payment-option-form">
                         <input type="hidden" name="_token" value="{{ csrf_token('process_payment') }}">
                         <input type="hidden" name="method" value="{{ method.code }}">
                         <input type="hidden" name="product_id" class="selected-product-id" value="">
 
-                        <button type="submit" style="border:none; background:none; padding:0;">
-                            <img src="{{ asset('assets/shop/img/payments-logo/' ~ supportedImages[method.code]) }}" alt="{{ method.code }}">
+                        <button type="submit" class="payment-option-btn" title="{{ method.code|capitalize }}">
+                            {% if method.code == "mada" %}
+                                <img src="{{ asset('assets/shop/img/payments-logo/mada.svg') }}" alt="mada" />
+                            {% else %}
+                                <img src="{{ asset('assets/shop/img/payments-logo/' ~ supportedImages[method.code]) }}" alt="{{ method.code }}" />
+                            {% endif %}
                         </button>
                     </form>
                 {% endif %}
             {% endfor %}
         </div>
     </div>
+    <style>
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.5rem;
+            background: #fff;
+        }
+
+        .table thead {
+            background: #f9fafb;
+            font-weight: bold;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            vertical-align: middle;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .table-hover tbody tr:hover {
+            background: #f1f3f5;
+        }
+
+        .btn-outline-primary {
+            color: #0d6efd;
+            border: 1px solid #0d6efd;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 1.5rem;
+            transition: 0.2s ease-in-out;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .card {
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .card-header {
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
 
 
     <style>
+        .payment-heading {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #333;
+        }
         .payment-options {
             display: flex;
             flex-wrap: wrap;
@@ -82,6 +149,46 @@
         .payment-option img {
             max-height: 32px;
             width: auto;
+        }
+    </style>
+    <style>
+        .payment-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: flex-start;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+        }
+
+        .payment-option-form {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            padding: 12px 20px;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .payment-option-form:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .payment-option-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .payment-option-btn img {
+            height: 34px;
+            width: auto;
+            display: block;
+        }
+
+        .payment-option-form:has(.selected-product-id[value]) {
+            border-color: #28a745;
         }
     </style>
 
