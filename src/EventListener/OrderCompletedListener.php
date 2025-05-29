@@ -2,6 +2,7 @@
 
 namespace Workouse\SyliusDigitalWalletPlugin\EventListener;
 use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Core\Model\PaymentInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Webmozart\Assert\Assert;
 use Workouse\SyliusDigitalWalletPlugin\Service\WalletService;
@@ -16,7 +17,12 @@ class OrderCompletedListener
 
     public function detractBalance(GenericEvent $event):void
     {
-        $this->walletService->detractBalance($event->getSubject());
+        if ($event->getSubject() instanceof PaymentInterface) {
+            $order = $event->getSubject()->getOrder();
+        } else {
+            $order = $event->getSubject();
+        }
+        $this->walletService->detractBalance($order);
     }
 
 }
