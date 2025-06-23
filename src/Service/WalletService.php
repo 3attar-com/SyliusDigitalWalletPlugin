@@ -110,13 +110,11 @@ class WalletService
 
     public function detractBalance(OrderInterface $order)
     {
-        $adjustment = array_sum(array_map(function (OrderItem $orderItem) {
-                return array_sum(array_map(function (Adjustment $adjustment) {
-                    if ($adjustment->getType() === CreditInterface::TYPE) {
-                        return $adjustment->getAmount();
-                    }
-                }, $orderItem->getAdjustments()->toArray()));
-            }, $order->getItems()->toArray())
+        $adjustment = array_sum(array_map(function (Adjustment $adjustment) {
+                if ($adjustment->getType() === CreditInterface::TYPE) {
+                    return $adjustment->getAmount();
+                }
+            }, $order->getAdjustments()->toArray())
         );
 
         if ($adjustment < 0) {
@@ -143,13 +141,13 @@ class WalletService
         $adjustment = $this->createAdjustment();
         $discountAmount = $discountAmount * 100;
 
-
         $adjustment->setType(CreditInterface::TYPE);
         if ($orderTotal > $discountAmount)  {
             $adjustment->setAmount(-$discountAmount );
         }   else    {
             $adjustment->setAmount(-$orderTotal);
         }
+
         $adjustment->setNeutral(false);
         $adjustment->setLabel('Wallet Order  Adjustment');
         $order->addAdjustment($adjustment);

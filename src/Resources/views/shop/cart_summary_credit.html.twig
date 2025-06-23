@@ -1,11 +1,9 @@
 {% import "@SyliusShop/Common/Macro/money.html.twig" as money %}
 {% set adjustmentTotal = 0 %}
-    {% for item in settings.cart.items %}
-        {% for adjustment in item.adjustments %}
-            {% if adjustment.type == 'wallet' %}
-                {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
-            {% endif %}
-        {% endfor %}
+    {% for adjustment in settings.cart.adjustments %}
+        {% if adjustment.type == 'wallet' %}
+            {% set adjustmentTotal = adjustmentTotal + adjustment.amount %}
+        {% endif %}
     {% endfor %}
     {% for item in settings.cart.shipments %}
         {% for adjustment in item.adjustments %}
