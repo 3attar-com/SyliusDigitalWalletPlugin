@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Workouse\SyliusDigitalWalletPlugin\Form\Type;
 
+use Doctrine\DBAL\Types\DateType;
 use Sylius\Component\Currency\Model\Currency;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -37,6 +39,12 @@ class CreditType extends AbstractType
                         'message' => 'workouse_digital_wallet.currency_code.not_blank',
                     ]),
                 ],
+            ])->add('expiredAt', DateTimeType::class, [
+                'input' => 'datetime_immutable',
+                'label' => 'Expiration Date',
+                'date_widget' => 'single_text',
+                'time_widget' => 'single_text',
+                'required' => true,
             ])
             ->add('action', TextType::class, [
                 'label' => 'workouse_digital_wallet.admin.form.action',
