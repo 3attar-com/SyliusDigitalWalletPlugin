@@ -124,7 +124,7 @@ class WalletService
             $credit = new Credit();
             $credit->setCustomer($user->getCustomer());
             $credit->setAmount($adjustment);
-            $credit->setAction(CreditInterface::BUY);
+            $credit->setAction("Wallet used for order #[{$order->getId()}] — amount deducted: SAR {$adjustment}");
             $credit->setCurrencyCode($this->currencyContext->getCurrencyCode());
             $this->entityManager->persist($credit);
             $this->orderProcessor->process($order);
