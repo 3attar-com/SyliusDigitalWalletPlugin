@@ -49,6 +49,13 @@ services:
     tags:
       - { name: 'kernel.event_listener', event: 'sylius.payment.post_complete' , method: 'detractBalance' }
 
+
+  3attar.wallet.listener.order_complete_no_payment:
+    class: Workouse\SyliusDigitalWalletPlugin\EventListener\OrderCompletedListener
+    arguments: [ "@workouse_digital_wallet.wallet_service" ]
+    tags:
+      - { name: 'kernel.event_listener', event: 'sylius.order.post_complete' , method: 'adjustBalanceWithoutPayment' }
+
   3attar.event_listener.shop.account_menu:
       class: Workouse\SyliusDigitalWalletPlugin\Menu\AdminCustomerShowMenuListener
       tags:

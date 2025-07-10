@@ -25,4 +25,10 @@ class OrderCompletedListener
         $this->walletService->detractBalance($order);
     }
 
+    public function adjustBalanceWithoutPayment(GenericEvent $event):void
+    {
+        if (!count($event->getSubject()->getPayments()))    {
+            $this->walletService->detractBalance($event->getSubject());
+        }
+    }
 }
