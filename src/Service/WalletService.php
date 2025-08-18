@@ -108,6 +108,21 @@ class WalletService
         return $this->balance($customer);
     }
 
+    public function createWalaTranaction($amount, $note)
+    {
+        $user = $this->security->getUser();
+        $customer = $user->getCustomer();
+        $balance = $this->balance();
+
+        $credit = new Credit();
+        $credit->setCustomer($customer);
+        $credit->setAmount($amount);
+        $credit->setAction($note);
+        $credit->setCurrencyCode($this->currencyContext->getCurrencyCode());
+        $this->entityManager->persist($credit);
+        $this->entityManager->flush();
+
+    }
     public function detractBalance(OrderInterface $order)
     {
         $adjustment = array_sum(array_map(function (Adjustment $adjustment) {
@@ -156,6 +171,7 @@ class WalletService
         return (int)($orderTotal > $discountAmount ? -$discountAmount : -$orderTotal);
 
     }
+
     private function createAdjustment(
     ): OrderAdjustmentInterface {
 
